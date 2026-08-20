@@ -1,62 +1,256 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rem home</title>
-    <link rel="icon" href="rem.png" type="image/icon type">
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-    <link rel="stylesheet" type="text/css" href="rec.css">
+
+    <title>Rem - Todo Manager</title>
+    <link rel="icon" href="rem.png">
+
+    <link
+        href="https://fonts.googleapis.com/icon?family=Material+Icons"
+        rel="stylesheet"
+    >
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap"
+        rel="stylesheet"
+    >
+
+    <link rel="stylesheet" href="rec.css">
 </head>
-<body onload="showopt();">
-  <div  class="jumbotron text-center rem">
-  <h1><img src='rem.png'> Rem app</h1>
-  <p>An app for remembering your TODO</p>
+
+<body>
+
+<header class="header">
+    <div class="header-inner">
+        <div class="brand">
+            <img src="rem.png" alt="Rem">
+            <div>
+                <h1>Rem</h1>
+                <p>Remember your TODOs</p>
+            </div>
+        </div>
+
+        <button class="btn primary" id="addCategoryBtn">
+            <span class="material-icons">add</span>
+            Add
+        </button>
+    </div>
+</header>
+
+
+<main class="container">
+
+    <section class="stats">
+        <div class="stat">
+            <span class="material-icons">folder</span>
+            <div>
+                <small>Categories</small>
+                <strong id="categoryCount">0</strong>
+            </div>
+        </div>
+
+        <div class="stat">
+            <span class="material-icons">list</span>
+            <div>
+                <small>Todos</small>
+                <strong id="todoCount">0</strong>
+            </div>
+        </div>
+
+        <div class="stat">
+            <span class="material-icons">check_circle</span>
+            <div>
+                <small>Completed</small>
+                <strong id="completedCount">0</strong>
+            </div>
+        </div>
+
+        <div class="stat">
+            <span class="material-icons">pending</span>
+            <div>
+                <small>Balance</small>
+                <strong id="balanceCount">0</strong>
+            </div>
+        </div>
+    </section>
+
+
+    <section class="card">
+
+        <div class="card-header">
+            <div>
+                <h2>My Lists</h2>
+                <p>Manage your categories and TODOs</p>
+            </div>
+
+            <button class="btn primary" id="addCategoryBtn2">
+                <span class="material-icons">add</span>
+                Add Category
+            </button>
+        </div>
+
+
+        <div class="table-wrap">
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Title</th>
+                        <th>Todo's</th>
+                        <th>Completed</th>
+                        <th>Balance</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+
+                <tbody id="categoryTable"></tbody>
+            </table>
+
+        </div>
+
+
+        <div class="empty" id="emptyState">
+            <span class="material-icons">checklist</span>
+            <h3>No categories yet</h3>
+            <p>Create a category to start adding TODOs.</p>
+
+            <button class="btn primary" id="emptyAddBtn">
+                <span class="material-icons">add</span>
+                Add Category
+            </button>
+        </div>
+
+    </section>
+
+</main>
+
+
+<!-- Category Modal -->
+
+<div class="modal" id="categoryModal">
+
+    <div class="modal-box">
+
+        <div class="modal-head">
+            <div>
+                <h3>New Category</h3>
+                <p>Create a TODO category</p>
+            </div>
+
+            <button class="icon-btn" data-close="categoryModal">
+                <span class="material-icons">close</span>
+            </button>
+        </div>
+
+
+        <form id="categoryForm">
+
+            <div class="field">
+                <input
+                    id="categoryInput"
+                    type="text"
+                    placeholder=" "
+                    maxlength="80"
+                    autocomplete="off"
+                >
+                <label>Category name</label>
+            </div>
+
+            <small class="error" id="categoryError"></small>
+
+            <div class="actions">
+                <button
+                    type="button"
+                    class="btn secondary"
+                    data-close="categoryModal"
+                >
+                    Cancel
+                </button>
+
+                <button class="btn primary">
+                    <span class="material-icons">add</span>
+                    Create
+                </button>
+            </div>
+
+        </form>
+
+    </div>
+
 </div>
 
-<div class="container">
-  <div id='listing'>
-  <div id='listall'>
-  </div><br>
-  <button class="btn btn-success" onclick="add();">+ Add list</button>
-  </div>
-  <hr color="white">
-  <div id='lishow'>
-      <h4 id='lilab'></h4>
-      <div id='storeli'>
 
-      </div>
-      <br>
-      <div class="container" id='editli'>
-        <br>
-      <div class="input-group mb-3">
-        <div class="input-group-prepend">
-      <span class="input-group-text">
-      Create new list: </span></div><input type="text" class="form-control" id='create' placeholder="enter your list"  autocomplete="off"> 
-      </div>
-      <br>
-      <div id='libutton'> </div>
-      <br>
-      </div>
-      <br>
-  <div id='newlhide'> <button class="btn btn-success btn-block" onclick='storeopt()'>add new list</button> </div>
-   
-  </div>
-  <div id='viewlist' class='container well c-b' style="display: none;">
-    <br>
-    <fieldset>
-        <legend>Enter list details:</legend>
-        <div class="input-group mb-3">
-          <div class="input-group-prepend">
-          <span class="input-group-text">
-          Name: </span></div> <input type="text" class="form-control" id='name' placeholder="enter the list name"  autocomplete="off" > </div><br>
-    <button onclick='savel();' class="btn btn-success btn-block" id='savev'>Save this list</button>
-    <button onclick="showopt();" class="btn btn-danger btn-block" >Cancel</button>
-    </fieldset><br>
-  </div>
+<!-- Todo Modal -->
+
+<div class="modal" id="todoModal">
+
+    <div class="modal-box todo-box">
+
+        <div class="modal-head">
+            <div>
+                <h3 id="modalTitle"></h3>
+                <p>Add and manage TODOs</p>
+            </div>
+
+            <button class="icon-btn" data-close="todoModal">
+                <span class="material-icons">close</span>
+            </button>
+        </div>
+
+
+        <form id="todoForm" class="todo-form">
+
+            <div class="field">
+                <input
+                    id="todoInput"
+                    type="text"
+                    placeholder=" "
+                    maxlength="200"
+                    autocomplete="off"
+                >
+                <label>Add TODO</label>
+            </div>
+
+            <button class="btn primary">
+                <span class="material-icons">add</span>
+                Add
+            </button>
+
+        </form>
+
+        <small class="error" id="todoError"></small>
+
+
+        <div id="todoList" class="todo-list"></div>
+
+
+        <div class="modal-footer">
+
+            <div>
+                Total: <b id="modalTotal">0</b>
+                &nbsp; Completed: <b id="modalCompleted">0</b>
+                &nbsp; Balance: <b id="modalBalance">0</b>
+            </div>
+
+            <button
+                class="btn secondary"
+                data-close="todoModal"
+            >
+                Close
+            </button>
+
+        </div>
+
+    </div>
+
 </div>
-<br><br><br>
-  <script src="script.js"></script>
+
+
+<script src="script.js"></script>
+
 </body>
 </html>

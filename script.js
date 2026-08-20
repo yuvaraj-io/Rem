@@ -1,133 +1,411 @@
-var q = JSON.parse(window.localStorage.getItem('list'));
-function add(){
-   document.getElementById('listing').style.display = 'none';
-   document.getElementById('viewlist').style.display = 'block';
-   document.getElementById('lishow').style.display = 'none';
+// javascript
+const KEY = "list";
+
+let activeCategory = null;
+
+const $ = id => document.getElementById(id);
+
+
+/* ---------------- Storage ---------------- */
+
+function getData() {
+    try {
+        return JSON.parse(localStorage.getItem(KEY)) || [];
+    } catch {
+        return [];
+    }
 }
 
-function savel(){
- var q = JSON.parse(window.localStorage.getItem('list'));
-  var n =  document.getElementById('name').value;
-   if(q == undefined){
-        var listall = []
-    }else{
-        var listall = JSON.parse(window.localStorage.getItem('list'));
-        
-    }
-    console.log(listall)
-    if(n == '' || n == " "){
-      alert(`Please enter your list. List can't be empty`);
-    }else
-    {
-      var add = {name: n
-      }
-      listall.push(add);
-      
-      console.log(listall);
-      var listall = window.localStorage.setItem('list', JSON.stringify(listall)); 
-      document.getElementById('viewlist').style.display = 'none';
-      document.getElementById('listing').style.display = 'block';
-      document.getElementById('name').value = '';
-      showopt();
-    }
-
+function saveData(data) {
+    localStorage.setItem(KEY, JSON.stringify(data));
 }
 
-function showopt(){
-    var opt = JSON.parse(window.localStorage.getItem('list'));
-    var txt = '';
-    var i = 0;
-    for(var i = 0; i < opt.length; i++){
-        txt += '<button class="btn btn-primary" style="margin: 10px;" onclick="lishow('+i+')">'+opt[i].name+'</button>'
+
+/* ---------------- Initialization ---------------- */
+
+document.addEventListener("DOMContentLoaded", () => {
+    migrateData();
+    render();
+
+    $("addCategoryBtn").onclick = openCategory;
+    $("addCategoryBtn2").onclick = openCategory;
+    $("emptyAddBtn").onclick = openCategory;
+
+    $("categoryForm").onsubmit = createCategory;
+    $("todoForm").onsubmit = addTodo;
+
+    document.addEventListener("click", handleClick);
+    document.addEventListener("keydown", e => {
+        if (e.key === "Escape") closeAll();
+    });
+});
+
+
+/* ---------------- Data migration ---------------- */
+
+function migrateData() {
+    const data = getData();
+    let changed = false;
+
+    data.forEach(category => {
+        if (!Array.isArray(category.todos)) {
+            const oldTodos =
+                JSON.parse(localStorage.getItem(category.name)) || [];
+
+            category.todos = oldTodos.map(text => ({
+                text: String(text),
+                completed: false
+            }));
+
+            changed = true;
+        }
+    });
+
+    if (changed) saveData(data);
+}
+
+
+/* ---------------- Rendering ---------------- */
+
+function render() {
+    const data = getData();
+    const table = $("categoryTable");
+
+    table.innerHTML = "";
+
+    let total = 0;
+    let completed = 0;
+
+    data.forEach((category, index) => {
+        const todos = category.todos || [];
+        const done = todos.filter(todo => todo.completed).length;
+        const balance = todos.length - done;
+
+        total += todos.length;
+        completed += done;
+
+        table.insertAdjacentHTML("beforeend", `
+            <tr>
+                <td>${index + 1}</td>
+
+                <td>
+                    <div class="title" title="${escapeHtml(category.name)}">
+                        ${escapeHtml(category.name)}
+                    </div>
+                </td>
+
+                <td>
+                    <span class="badge">${todos.length}</span>
+                </td>
+
+                <td>
+                    <span class="badge success">${done}</span>
+                </td>
+
+                <td>
+                    <span class="badge ${balance ? "warning" : "success"}">
+                        ${balance}
+                    </span>
+                </td>
+
+                <td>
+                    <button
+                        class="btn primary small"
+                        data-view="${index}"
+                    >
+                        <span class="material-icons">visibility</span>
+                        View All
+                    </button>
+
+                    <button
+                        class="btn danger small"
+                        data-delete-category="${index}"
+                    >
+                        <span class="material-icons">delete</span>
+                    </button>
+                </td>
+            </tr>
+        `);
+    });
+
+    $("emptyState").style.display =
+        data.length ? "none" : "block";
+
+    $("categoryCount").textContent = data.length;
+    $("todoCount").textContent = total;
+    $("completedCount").textContent = completed;
+    $("balanceCount").textContent = total - completed;
+}
+
+
+/* ---------------- Category ---------------- */
+
+function openCategory() {
+    show("categoryModal");
+
+    $("categoryInput").value = "";
+    $("categoryError").textContent = "";
+
+    setTimeout(() => $("categoryInput").focus(), 100);
+}
+
+
+function createCategory(event) {
+    event.preventDefault();
+
+    const input = $("categoryInput");
+    const name = input.value.trim();
+
+    if (name.length < 2) {
+        $("categoryError").textContent =
+            "Category name must contain at least 2 characters.";
+        return;
     }
-    document.getElementById('listall').innerHTML = txt;
-    document.getElementById('editli').style.display = 'none';
-    document.getElementById('viewlist').style.display = 'none';
-    document.getElementById('newlhide').style.display = 'block';
-    document.getElementById('listing').style.display = 'block';
-    // console.log(opt);
-}
-function lishow(j){
-    document.getElementById('lishow').style.display = 'block';
-    document.getElementById('libutton').innerHTML = "<button class='btn btn-primary btn-block' onclick='store("+j+")'>Submit</button><br>";
-    document.getElementById('libutton').innerHTML += "<button class='btn btn-danger btn-block' onclick='showopt();'>Cancel</button> "
-    var opt = JSON.parse(window.localStorage.getItem('list'));
-    var  txt = opt[j].name;
-    var b =  JSON.parse(window.localStorage.getItem(txt))
-    document.getElementById('lilab').innerHTML = 'Your list view of '+txt+'<span class="fa fa-trash f-r" style="font-size: 35px;color: red;" onclick="deletelist('+j+')"></span><br><br>  ';
-    if( b == undefined){
-      var listall = []
-  }else{
-    var listall = JSON.parse(window.localStorage.getItem(txt));
-  }
-   console.log(listall);
-   window.localStorage.setItem(txt, JSON.stringify(listall));
-   var q = JSON.parse(window.localStorage.getItem(txt))
-  var val = '';
-  
-    val += '<ul class="list-group">'
-      for(var i = 0; i < q.length; i++){
-      val += '<li class="list-group-item d-flex justify-content-between align-items-center c-b"> '+q[i]+'<span onclick="removelist('+j+","+i+');" class="badge badge-danger badge-pill">X</span></li>';
+
+    const data = getData();
+
+    if (
+        data.some(
+            category =>
+                category.name.toLowerCase() === name.toLowerCase()
+        )
+    ) {
+        $("categoryError").textContent =
+            "This category already exists.";
+        return;
     }
-    val += '</ul>'
-  
-  document.getElementById('storeli').innerHTML = val;
+
+    data.push({
+        name,
+        todos: []
+    });
+
+    saveData(data);
+    render();
+    close("categoryModal");
+
+    openTodo(data.length - 1);
 }
-function deletelist(j){
-  var list = JSON.parse(window.localStorage.getItem('list'));
-  var del = list[j].name;
-  if (confirm("Are you sure you want to delete all record of {{ "+del+" }} list!")) {
-    txt = "You pressed Cancel!";
-    list.splice(j, 1);
-    window.localStorage.removeItem(del);
-    window.localStorage.setItem('list', JSON.stringify(list)); 
-    document.getElementById('lishow').style.display = 'none';
-    showopt(); 
-  } else {
-    
-  }
+
+
+/* ---------------- Todos ---------------- */
+
+function openTodo(index) {
+    const data = getData();
+
+    if (!data[index]) return;
+
+    activeCategory = index;
+
+    $("modalTitle").textContent = data[index].name;
+
+    show("todoModal");
+    renderTodos();
+
+    setTimeout(() => $("todoInput").focus(), 100);
 }
-function removelist(list, num){
-  var localStorageValue = JSON.parse(window.localStorage.getItem('list'));
-  debugger
-  var s = localStorageValue[list].name;
-  console.log(s);
-  var listvalue = JSON.parse(window.localStorage.getItem(s));
-  listvalue.splice(num, 1)
-  window.localStorage.setItem( s, JSON.stringify(listvalue));
-  console.log(listvalue);
-  lishow(list);  
+
+
+function addTodo(event) {
+    event.preventDefault();
+
+    if (activeCategory === null) return;
+
+    const input = $("todoInput");
+    const text = input.value.trim();
+
+    if (!text) {
+        $("todoError").textContent = "Please enter a TODO.";
+        return;
+    }
+
+    const data = getData();
+
+    data[activeCategory].todos.push({
+        text,
+        completed: false
+    });
+
+    saveData(data);
+
+    input.value = "";
+    $("todoError").textContent = "";
+
+    render();
+    renderTodos();
+
+    input.focus();
 }
-function storeopt(){
-   
-    document.getElementById('newlhide').style.display = 'none';
-    document.getElementById('libutton').style.display = 'block';
-    var e = document.getElementById('editli');
-    e.style.display = 'block';
-   
+
+
+function renderTodos() {
+    const data = getData();
+    const todos = data[activeCategory]?.todos || [];
+    const list = $("todoList");
+
+    list.innerHTML = "";
+
+    if (!todos.length) {
+        list.innerHTML =
+            `<div class="no-todos">No TODOs yet.</div>`;
+    }
+
+    todos.forEach((todo, index) => {
+        list.insertAdjacentHTML("beforeend", `
+            <div class="todo-item">
+
+                <input
+                    type="checkbox"
+                    ${todo.completed ? "checked" : ""}
+                    data-toggle="${index}"
+                >
+
+                <span class="todo-text ${todo.completed ? "done" : ""}">
+                    ${escapeHtml(todo.text)}
+                </span>
+
+                <button
+                    class="delete"
+                    data-delete-todo="${index}"
+                >
+                    <span class="material-icons">delete</span>
+                </button>
+
+            </div>
+        `);
+    });
+
+    const done =
+        todos.filter(todo => todo.completed).length;
+
+    $("modalTotal").textContent = todos.length;
+    $("modalCompleted").textContent = done;
+    $("modalBalance").textContent = todos.length - done;
 }
-function store(j){
-  var opt = JSON.parse(window.localStorage.getItem('list'));
-  var  txt = opt[j].name;
-  var l = j;
-  var text = document.getElementById('create').value;
-  var q = JSON.parse(window.localStorage.getItem(txt));
-  if(text == '' || text == " "){
-    alert(`Please enter your list. List can't be empty`);
-  }else{
-  q.push(text);
-  var val = '';
-    val += '<ul class="list-group">';
-    console.log(j);
-      for(var i = 0; i < q.length; i++){
-        val += '<li class="list-group-item d-flex justify-content-between align-items-center c-b"> '+q[i]+'<span onclick="removelist('+j+","+i+');" class="badge badge-danger badge-pill">X</span></li>';
-     }
-    val += '</ul>'
-  document.getElementById('storeli').innerHTML = val;
-  document.getElementById('lishow').style.display = 'block';
-  document.getElementById('editli').style.display = 'none';
-  document.getElementById('newlhide').style.display = 'block';
-  document.getElementById('create').value = '';
-  window.localStorage.setItem( txt, JSON.stringify(q));
-  }
+
+
+/* ---------------- Events ---------------- */
+
+function handleClick(event) {
+    const target = event.target.closest("[data-view]");
+
+    if (target) {
+        openTodo(Number(target.dataset.view));
+        return;
+    }
+
+    const deleteCategory =
+        event.target.closest("[data-delete-category]");
+
+    if (deleteCategory) {
+        removeCategory(
+            Number(deleteCategory.dataset.deleteCategory)
+        );
+        return;
+    }
+
+    const toggle =
+        event.target.closest("[data-toggle]");
+
+    if (toggle) {
+        toggleTodo(Number(toggle.dataset.toggle));
+        return;
+    }
+
+    const deleteTodo =
+        event.target.closest("[data-delete-todo]");
+
+    if (deleteTodo) {
+        removeTodo(
+            Number(deleteTodo.dataset.deleteTodo)
+        );
+        return;
+    }
+
+    const closeButton =
+        event.target.closest("[data-close]");
+
+    if (closeButton) {
+        close(closeButton.dataset.close);
+    }
+}
+
+
+/* ---------------- Todo Actions ---------------- */
+
+function toggleTodo(index) {
+    const data = getData();
+
+    data[activeCategory].todos[index].completed =
+        !data[activeCategory].todos[index].completed;
+
+    saveData(data);
+
+    render();
+    renderTodos();
+}
+
+
+function removeTodo(index) {
+    const data = getData();
+    const todo = data[activeCategory].todos[index];
+
+    if (!confirm(`Delete "${todo.text}"?`)) return;
+
+    data[activeCategory].todos.splice(index, 1);
+
+    saveData(data);
+
+    render();
+    renderTodos();
+}
+
+
+function removeCategory(index) {
+    const data = getData();
+
+    if (
+        !confirm(
+            `Delete "${data[index].name}" and all its TODOs?`
+        )
+    ) return;
+
+    data.splice(index, 1);
+
+    saveData(data);
+
+    render();
+}
+
+
+/* ---------------- Modal ---------------- */
+
+function show(id) {
+    $(id).classList.add("show");
+}
+
+
+function close(id) {
+    $(id).classList.remove("show");
+}
+
+
+function closeAll() {
+    document
+        .querySelectorAll(".modal")
+        .forEach(modal => modal.classList.remove("show"));
+
+    activeCategory = null;
+}
+
+
+/* ---------------- Helpers ---------------- */
+
+function escapeHtml(value) {
+    return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
 }
